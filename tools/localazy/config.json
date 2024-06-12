@@ -192,8 +192,7 @@
       "name" : ":features:ftue:impl",
       "includeRegex" : [
         "screen_welcome_.*",
-        "screen_notification_optin_.*",
-        "screen_qr_code_login_.+"
+        "screen_notification_optin_.*"
       ]
     },
     {
@@ -237,9 +236,10 @@
       ]
     },
     {
-      "name" : ":features:call",
+      "name" : ":features:call:impl",
       "includeRegex" : [
-        "call_.*"
+        "call_.*",
+        "screen_incoming_call.*"
       ]
     },
     {

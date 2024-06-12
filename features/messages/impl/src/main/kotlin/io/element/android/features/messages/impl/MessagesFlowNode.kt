@@ -16,7 +16,6 @@
 
 package io.element.android.features.messages.impl
 
-import android.content.Context
 import android.os.Parcelable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,9 +28,10 @@ import com.bumble.appyx.navmodel.backstack.BackStack
 import com.bumble.appyx.navmodel.backstack.operation.push
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import im.vector.app.features.analytics.plan.Interaction
 import io.element.android.anvilannotations.ContributesNode
-import io.element.android.features.call.CallType
-import io.element.android.features.call.ui.ElementCallActivity
+import io.element.android.features.call.api.CallType
+import io.element.android.features.call.api.ElementCallEntryPoint
 import io.element.android.features.location.api.Location
 import io.element.android.features.location.api.SendLocationEntryPoint
 import io.element.android.features.location.api.ShowLocationEntryPoint
@@ -57,7 +57,6 @@ import io.element.android.libraries.architecture.createNode
 import io.element.android.libraries.architecture.inputs
 import io.element.android.libraries.architecture.overlay.Overlay
 import io.element.android.libraries.architecture.overlay.operation.show
-import io.element.android.libraries.di.ApplicationContext
 import io.element.android.libraries.di.RoomScope
 import io.element.android.libraries.matrix.api.MatrixClient
 import io.element.android.libraries.matrix.api.core.EventId
@@ -68,6 +67,8 @@ import io.element.android.libraries.matrix.api.permalink.PermalinkData
 import io.element.android.libraries.matrix.api.timeline.item.TimelineItemDebugInfo
 import io.element.android.libraries.mediaviewer.api.local.MediaInfo
 import io.element.android.libraries.mediaviewer.api.viewer.MediaViewerNode
+import io.element.android.services.analytics.api.AnalyticsService
+import io.element.android.services.analyticsproviders.api.trackers.captureInteraction
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.parcelize.Parcelize
 
@@ -75,11 +76,12 @@ import kotlinx.parcelize.Parcelize
 class MessagesFlowNode @AssistedInject constructor(
     @Assisted buildContext: BuildContext,
     @Assisted plugins: List<Plugin>,
-    @ApplicationContext private val context: Context,
     private val matrixClient: MatrixClient,
     private val sendLocationEntryPoint: SendLocationEntryPoint,
     private val showLocationEntryPoint: ShowLocationEntryPoint,
     private val createPollEntryPoint: CreatePollEntryPoint,
+    private val elementCallEntryPoint: ElementCallEntryPoint,
+    private val analyticsService: AnalyticsService,
 ) : BaseFlowNode<MessagesFlowNode.NavTarget>(
     backstack = BackStack(
         initialElement = NavTarget.Messages,
@@ -184,11 +186,12 @@ class MessagesFlowNode @AssistedInject constructor(
                     }
 
                     override fun onJoinCallClick(roomId: RoomId) {
-                        val inputs = CallType.RoomCall(
+                        val callType = CallType.RoomCall(
                             sessionId = matrixClient.sessionId,
                             roomId = roomId,
                         )
-                        ElementCallActivity.start(context, inputs)
+                        analyticsService.captureInteraction(Interaction.Name.MobileRoomCallButton)
+                        elementCallEntryPoint.startCall(callType)
                     }
                 }
                 val inputs = MessagesNode.Inputs(
